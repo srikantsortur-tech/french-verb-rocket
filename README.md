@@ -1,2 +1,2 @@
 # french-verb-rocket
-Game to practice French Verb Conjugation
+Game to practice French Verb Conjugation - https://github.com/srikantsortur-tech/french-verb-rocket/verb_rocket.html
