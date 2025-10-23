@@ -320,8 +320,8 @@
                 
                 // Determine stem: remove 2 letters unless verb is prendre, which is 4 letters
                 let stemLengthToRemove = 2; 
-                if (verbType === 're' && (randomVerb.fr.endsWith('prendre') || randomVerb.fr.endsWith('attendre') || randomVerb.fr.endsWith('entendre'))) {
-                    // prendre, attendre, entendre, etc. are 4-letter stems ending in D/T/ND.
+                if (verbType === 're' && (randomVerb.fr.endsWith('prendre') || randomVerb.fr.endsWith('attendre') || randomVerb.fr.endsWith('entendre') || randomVerb.fr.endsWith('vendre') || randomVerb.fr.endsWith('perdre') || randomVerb.fr.endsWith('résoudre') || randomVerb.fr.endsWith('descendre'))) {
+                    // For these common -RE verbs, the stem is longer than (Verb - re)
                     stemLengthToRemove = 4;
                 }
                 
