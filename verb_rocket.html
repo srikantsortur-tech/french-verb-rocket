@@ -5,6 +5,7 @@
     - Tabbed navigation allows for focused practice sessions.
     - Rocket visual theme is preserved for engagement.
     - Detailed, rule-based feedback (e.g., "-IR verbs use -issons") is crucial for test preparation.
+    - NEW: Static conjugation guide table for easy comparison of the three patterns.
 -->
 <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
 <!DOCTYPE html>
@@ -15,6 +16,9 @@
     <title>The Polyglot Rocket - Multi-Verb Practice</title>
     <!-- Load Tailwind CSS for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         /* Custom styles for a playful look */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
@@ -117,17 +121,79 @@
         <div class="score-display">Score: <span id="main-score">0</span></div>
 
         <nav class="flex flex-wrap justify-center border-b border-gray-200 mb-4">
-            <button class="tab-button p-3 text-gray-800 font-semibold active" onclick="app.switchTab('er')">-ER Verbs</button>
+            <button class="tab-button p-3 text-gray-800 font-semibold active" onclick="app.switchTab('guide')">Conjugation Guide</button>
+            <button class="tab-button p-3 text-gray-800 font-semibold" onclick="app.switchTab('er')">-ER Verbs</button>
             <button class="tab-button p-3 text-gray-800 font-semibold" onclick="app.switchTab('ir')">-IR Verbs</button>
             <button class="tab-button p-3 text-gray-800 font-semibold" onclick="app.switchTab('re')">-RE Verbs</button>
         </nav>
 
-        <div id="er-content" class="tab-content">
+        <!-- CONJUGATION GUIDE CONTENT -->
+        <div id="guide-content" class="tab-content">
+            <h2 class="text-xl font-bold text-gray-800 mb-4 text-center">Reference: Regular Conjugation Patterns</h2>
+            <p class="text-gray-600 mb-4 text-sm text-center">To conjugate, **chop off the -er, -ir, or -re** ending, and add the appropriate ending below.</p>
+            
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-300">
+                    <thead class="bg-gray-100">
+                        <tr>
+                            <th class="py-2 px-1 text-xs font-semibold text-gray-700">Who?</th>
+                            <th class="py-2 px-1 text-xs font-semibold text-red-600">-ER (e.g., parler)</th>
+                            <th class="py-2 px-1 text-xs font-semibold text-green-600">-IR (e.g., finir)</th>
+                            <th class="py-2 px-1 text-xs font-semibold text-blue-600">-RE (e.g., vendre)</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200 text-center text-sm">
+                        <tr>
+                            <td class="py-2 px-1 font-medium">Je</td>
+                            <td class="py-2 px-1 text-red-600">parl<strong>e</strong></td>
+                            <td class="py-2 px-1 text-green-600">fin<strong>is</strong></td>
+                            <td class="py-2 px-1 text-blue-600">vend<strong>s</strong></td>
+                        </tr>
+                        <tr>
+                            <td class="py-2 px-1 font-medium">Tu</td>
+                            <td class="py-2 px-1 text-red-600">parl<strong>es</strong></td>
+                            <td class="py-2 px-1 text-green-600">fin<strong>is</strong></td>
+                            <td class="py-2 px-1 text-blue-600">vend<strong>s</strong></td>
+                        </tr>
+                        <tr>
+                            <td class="py-2 px-1 font-medium">Il/Elle/On</td>
+                            <td class="py-2 px-1 text-red-600">parl<strong>e</strong></td>
+                            <td class="py-2 px-1 text-green-600">fin<strong>it</strong></td>
+                            <td class="py-2 px-1 text-blue-600">vend<strong>—</strong></td>
+                        </tr>
+                        <tr>
+                            <td class="py-2 px-1 font-medium">Nous</td>
+                            <td class="py-2 px-1 text-red-600">parl<strong>ons</strong></td>
+                            <td class="py-2 px-1 text-green-600">fin<strong>issons</strong></td>
+                            <td class="py-2 px-1 text-blue-600">vend<strong>ons</strong></td>
+                        </tr>
+                        <tr>
+                            <td class="py-2 px-1 font-medium">Vous</td>
+                            <td class="py-2 px-1 text-red-600">parl<strong>ez</strong></td>
+                            <td class="py-2 px-1 text-green-600">fin<strong>issez</strong></td>
+                            <td class="py-2 px-1 text-blue-600">vend<strong>ez</strong></td>
+                        </tr>
+                        <tr>
+                            <td class="py-2 px-1 font-medium">Ils/Elles</td>
+                            <td class="py-2 px-1 text-red-600">parl<strong>ent</strong></td>
+                            <td class="py-2 px-1 text-green-600">fin<strong>issent</strong></td>
+                            <td class="py-2 px-1 text-blue-600">vend<strong>ent</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+
+        <!-- ER Quiz Content -->
+        <div id="er-content" class="tab-content hidden">
             <div id="er-quiz-ui"></div>
         </div>
+        <!-- IR Quiz Content -->
         <div id="ir-content" class="tab-content hidden">
             <div id="ir-quiz-ui"></div>
         </div>
+        <!-- RE Quiz Content -->
         <div id="re-content" class="tab-content hidden">
             <div id="re-quiz-ui"></div>
         </div>
@@ -195,7 +261,7 @@
                 this.loadQuiz('ir');
                 this.loadQuiz('re');
                 this.renderErrorTracker();
-                this.switchTab('er'); // Start on the ER tab
+                this.switchTab('guide'); // Start on the GUIDE tab
             },
 
             switchTab(verbType) {
@@ -205,7 +271,10 @@
                 document.getElementById(`${verbType}-content`).classList.remove('hidden');
                 document.querySelector(`.tab-button[onclick="app.switchTab('${verbType}')"]`).classList.add('active');
                 
-                this.loadNextQuestion(verbType); // Load a new question for the selected tab
+                // Only load quiz questions if not on the guide tab
+                if (verbType !== 'guide') {
+                    this.loadNextQuestion(verbType);
+                }
             },
 
             getVerbInfo(verbType) {
@@ -249,7 +318,10 @@
                 const randomVerb = verbsList[Math.floor(Math.random() * verbsList.length)];
                 const randomPronoun = this.state.pronouns[Math.floor(Math.random() * this.state.pronouns.length)];
                 
-                const stem = randomVerb.fr.slice(0, randomVerb.fr.length - 2);
+                // Special handling for -RE verbs with null/empty ending
+                const stemLength = (verbType === 're' && randomVerb.fr === 'prendre') ? 4 : 2;
+                const stem = randomVerb.fr.slice(0, randomVerb.fr.length - stemLength); // Cut off -er/-ir/-re
+                
                 const info = this.getVerbInfo(verbType);
                 const correctEnding = info.endings[randomPronoun.key] || '';
                 const correctAnswer = stem + correctEnding;
@@ -375,13 +447,20 @@
                 // Part 3: Other Endings Context
                 explanation += `<h4 class="text-indigo-700 mt-2">Context (Why other endings were wrong):</h4><ul>`;
                 
+                const info = this.getVerbInfo(verbType);
+                
                 q.options.forEach(ending => {
                     const isTheCorrectEnding = ending === q.correctEnding;
                     const style = isTheCorrectEnding ? 'text-green-700 font-bold' : 'text-red-700';
 
-                    const pronounsUsingEnding = Object.keys(this.getVerbInfo(verbType).endings)
-                        .filter(pKey => this.getVerbInfo(verbType).endings[pKey] === ending)
-                        .map(pKey => pKey.toUpperCase().replace('/', '/'))
+                    const pronounsUsingEnding = Object.keys(info.endings)
+                        .filter(pKey => info.endings[pKey] === ending)
+                        .map(pKey => {
+                            // Map conjugation key back to user-friendly pronoun display
+                            if (pKey === 'il/elle/on') return 'IL, ELLE, ON';
+                            if (pKey === 'ils/elles') return 'ILS, ELLES';
+                            return pKey.toUpperCase();
+                        })
                         .join(', ');
 
                     explanation += `<li class="${style}">Ending **-${ending.toUpperCase() || '—'}**: Used for **${pronounsUsingEnding}**.</li>`;
