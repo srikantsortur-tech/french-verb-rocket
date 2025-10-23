@@ -1,36 +1,46 @@
+<!-- Chosen Palette: Playful Rocket theme (Blue/Indigo, Deep Orange) for familiar visuals. -->
+<!-- Application Structure Plan: Tabbed interface to separate the three distinct conjugation patterns (-ER, -IR, -RE) as required by the user's reference sheet. This structure allows the user to isolate practice for each rule. The core game loop (generate question, select ending, show detailed feedback, proceed on click) is maintained within each tab to reinforce the specific pattern for that verb group. -->
+<!-- Visualization & Content Choices: 
+    - Full verb lists from the user's reference sheet for each module.
+    - Tabbed navigation allows for focused practice sessions.
+    - Rocket visual theme is preserved for engagement.
+    - Detailed, rule-based feedback (e.g., "-IR verbs use -issons") is crucial for test preparation.
+-->
+<!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Verb Rocket - Quiz Mode</title>
+    <title>The Polyglot Rocket - Multi-Verb Practice</title>
     <!-- Load Tailwind CSS for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* Custom styles for a playful look */
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f0f4f8; /* Light blue-gray background */
-            display: flex;
-            flex-direction: column; /* Allow content stacking */
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
+            background-color: #f0f4f8; 
             padding: 10px;
         }
         .game-container {
-            max-width: 450px; /* Slightly wider for the longer subjects */
+            max-width: 450px;
             width: 100%;
             background-color: #ffffff;
             border-radius: 20px;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
             padding: 20px;
-            text-align: center;
-            margin-bottom: 20px;
+            margin: 20px auto;
+            position: relative; /* For the rocket area */
         }
+        .tab-button.active {
+            border-bottom-color: #ff5722;
+            background-color: #ffe0b2; /* Pale Orange */
+            color: #ff5722; 
+        }
+        .tab-button { transition: all 0.2s; border-bottom: 3px solid transparent; }
         .question-box {
-            background-color: #e0f7fa; /* Pale cyan */
+            background-color: #e0f7fa; 
             border: 3px solid #00bcd4;
             border-radius: 15px;
             padding: 20px;
@@ -58,15 +68,14 @@
             transition: all 0.15s ease-in-out;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
-        .choice-button:hover {
+        .choice-button:hover:not(:disabled) {
             transform: translateY(-2px);
             box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
         }
-        .choice-button:active {
+        .choice-button:active:not(:disabled) {
             transform: translateY(0);
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
-        /* Rocket Launch Animation */
         @keyframes launch {
             0% { transform: translateY(0); opacity: 1; }
             100% { transform: translateY(-200px); opacity: 0; }
@@ -76,29 +85,17 @@
         }
         .message-box {
             min-height: 50px;
-            display: flex;
-            flex-direction: column; /* Allows content stacking */
-            justify-content: center;
-            align-items: flex-start; /* Aligns text left inside the box */
             font-weight: 700;
             border-radius: 10px;
             margin-top: 15px;
             padding: 10px;
             transition: background-color 0.3s, color 0.3s;
             font-size: 0.9rem;
-            text-align: left; /* Ensures text is left-aligned */
+            text-align: left;
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.1);
         }
-        .message-box h4 {
-            font-weight: 900;
-            margin-top: 8px;
-            margin-bottom: 4px;
-            font-size: 1.0rem;
-        }
-        .message-box ul {
-            list-style-type: disc;
-            margin-left: 20px;
-            font-weight: normal;
-        }
+        .message-box h4 { font-weight: 900; margin-top: 8px; margin-bottom: 4px; font-size: 1.0rem; }
+        .message-box ul { list-style-type: disc; margin-left: 20px; font-weight: normal; }
         .score-display {
             background-color: #3f51b5;
             color: white;
@@ -110,43 +107,35 @@
             margin-bottom: 15px;
             display: inline-block;
         }
-        .rocket-icon {
-            font-size: 4rem;
-            line-height: 1;
-            transition: transform 0.5s;
-        }
+        .rocket-icon { font-size: 4rem; line-height: 1; transition: transform 0.5s; }
     </style>
 </head>
 <body>
 
     <div class="game-container">
-        <h1 class="text-3xl font-bold text-gray-800 mb-4">🚀 The Verb Rocket - Quiz Practice 🚀</h1>
-        <div class="score-display">Score: <span id="score">0</span></div>
+        <h1 class="text-3xl font-bold text-gray-800 mb-4">🚀 The Polyglot Rocket</h1>
+        <div class="score-display">Score: <span id="main-score">0</span></div>
 
-        <!-- Question Display -->
-        <div class="question-box">
-            <div id="rocket-area" class="flex flex-col items-center">
-                <div class="rocket-icon">
-                    <span id="rocket-emoji">🚀</span>
-                </div>
-                <!-- This will now show complex subjects like "LA FILLE" or "NOUS" -->
-                <p class="pronoun" id="current-subject">JE</p> 
-                <p class="verb-stem" id="verb-stem">PARL</p>
-            </div>
+        <nav class="flex flex-wrap justify-center border-b border-gray-200 mb-4">
+            <button class="tab-button p-3 text-gray-800 font-semibold active" onclick="app.switchTab('er')">-ER Verbs</button>
+            <button class="tab-button p-3 text-gray-800 font-semibold" onclick="app.switchTab('ir')">-IR Verbs</button>
+            <button class="tab-button p-3 text-gray-800 font-semibold" onclick="app.switchTab('re')">-RE Verbs</button>
+        </nav>
+
+        <div id="er-content" class="tab-content">
+            <div id="er-quiz-ui"></div>
         </div>
-
-        <!-- Choice Buttons -->
-        <div id="choice-buttons" class="grid grid-cols-3 gap-3">
-            <!-- Buttons will be generated here -->
+        <div id="ir-content" class="tab-content hidden">
+            <div id="ir-quiz-ui"></div>
         </div>
-
-        <!-- Feedback Message -->
-        <div id="message" class="message-box bg-gray-100 text-gray-700">Choose the ending to launch the rocket!</div>
+        <div id="re-content" class="tab-content hidden">
+            <div id="re-quiz-ui"></div>
+        </div>
     </div>
 
     <!-- Conjugation Tracker -->
     <div class="game-container" id="tracker-container">
-        <h3 class="font-bold text-xl text-yellow-800 mb-2">💡 Practice Tracker (Mistakes)</h3>
+        <h3 class="font-bold text-xl text-indigo-700 mb-2">💡 Practice Tracker (Mistakes by Pronoun)</h3>
         <div id="error-list" class="grid grid-cols-2 gap-x-4 gap-y-1 text-base">
             <!-- Tracker items will go here -->
         </div>
@@ -154,333 +143,288 @@
     </div>
 
     <script>
-        // --- GAME DATA ---
-        
-        const verbs = ["regarder", "penser", "marcher", "adorer", "écouter", "raconter", "manger", "étudier", "préférer", "jouer", "travailler", "acheter", "briller", "chanter"];
-        
-        // English translations for rich feedback
-        const englishInfinitiveMap = {
-            "regarder": "to watch/look at", "penser": "to think", "marcher": "to walk", "adorer": "to love/adore",
-            "écouter": "to listen", "raconter": "to tell/recount", "manger": "to eat", "étudier": "to study",
-            "préférer": "to prefer", "jouer": "to play", "travailler": "to work", "acheter": "to buy",
-            "briller": "to shine", "chanter": "to sing"
-        };
-        
-        // The master conjugation map (using simple pronoun keys)
-        const conjugationMap = {
-            "je": "e",
-            "tu": "es",
-            "il/elle/on": "e",
-            "nous": "ons",
-            "vous": "ez",
-            "ils/elles": "ent"
-        };
-        
-        // Reverse map for generating context about incorrect answers
-        const endingToPronounMap = {
-            "e": "Je, Il, Elle, On",
-            "es": "Tu",
-            "ons": "Nous",
-            "ez": "Vous",
-            "ent": "Ils, Elles"
-        };
-
-        const allEndings = Array.from(new Set(Object.values(conjugationMap))); 
-
-        // New: Subject Map to use complex subjects from the quiz but map them to the correct conjugation key
-        const subjectMap = [
-            { subject: "Je", key: "je" },
-            { subject: "Tu", key: "tu" },
-            { subject: "Nous", key: "nous" },
-            { subject: "Vous", key: "vous" },
-            { subject: "Elle", key: "il/elle/on" }, 
-            { subject: "On", key: "il/elle/on" }, 
-            { subject: "Ils", key: "ils/elles" },
-            { subject: "La fille", key: "il/elle/on" }, 
-            { subject: "L'équipe", key: "il/elle/on" }, 
-            { subject: "Le soleil", key: "il/elle/on" }, 
-            { subject: "Mamie et papy", key: "ils/elles" }, 
-            { subject: "Les élèves", key: "ils/elles" }, 
-        ];
-
-        // --- DOM Elements ---
-        const scoreDisplay = document.getElementById('score');
-        const subjectDisplay = document.getElementById('current-subject');
-        const verbStemDisplay = document.getElementById('verb-stem');
-        const choiceButtonsContainer = document.getElementById('choice-buttons');
-        const messageBox = document.getElementById('message');
-        const rocketArea = document.getElementById('rocket-area');
-        const rocketEmoji = document.getElementById('rocket-emoji');
-        const nextQuestionButtonId = 'next-question-button';
-
-        // --- GAME STATE ---
-        let score = 0;
-        let currentCorrectEnding = "";
-        let currentPronounKey = ""; 
-        let currentInfinitive = "";
-        let isProcessing = false;
-        
-        // Tracker keys must match conjugationMap keys
-        let errorTracker = {
-            "je": 0, "tu": 0, "il/elle/on": 0, "nous": 0, "vous": 0, "ils/elles": 0
-        };
-
-        // --- HELPER FUNCTIONS ---
-        
-        /**
-         * Returns a simple English translation of the conjugated phrase.
-         */
-        function getEnglishTranslation(infinitive, pronounKey) {
-            const baseTranslation = englishInfinitiveMap[infinitive] || "to act";
-            const action = baseTranslation.replace('to ', '');
+        const app = {
+            state: {
+                currentQuestion: null,
+                score: 0,
+                errorTracker: {
+                    "je": 0, "tu": 0, "il/elle/on": 0, "nous": 0, "vous": 0, "ils/elles": 0
+                },
+                pronouns: [
+                    { text: 'Je', key: 'je', ending: { er: 'e', ir: 's', re: 's' } },
+                    { text: 'Tu', key: 'tu', ending: { er: 'es', ir: 's', re: 's' } },
+                    { text: 'Il', key: 'il/elle/on', ending: { er: 'e', ir: 't', re: '' } },
+                    { text: 'Elle', key: 'il/elle/on', ending: { er: 'e', ir: 't', re: '' } },
+                    { text: 'Nous', key: 'nous', ending: { er: 'ons', ir: 'issons', re: 'ons' } },
+                    { text: 'Vous', key: 'vous', ending: { er: 'ez', ir: 'issez', re: 'ez' } },
+                    { text: 'Ils', key: 'ils/elles', ending: { er: 'ent', ir: 'issent', re: 'ent' } },
+                    { text: 'Elles', key: 'ils/elles', ending: { er: 'ent', ir: 'issent', re: 'ent' } },
+                    // Complex Subjects (using original quiz concepts for review)
+                    { text: 'La fille', key: 'il/elle/on', ending: { er: 'e', ir: 't', re: '' }, info: '(Singular)' },
+                    { text: 'Mamie et papy', key: 'ils/elles', ending: { er: 'ent', ir: 'issent', re: 'ent' }, info: '(Plural)' },
+                    { text: 'L\'équipe', key: 'il/elle/on', ending: { er: 'e', ir: 't', re: '' }, info: '(Singular)' },
+                ],
+            },
             
-            // Simple logic to add 's' for third person singular in English
-            const conjugatedAction = (pronounKey === 'il/elle/on') ? action + 's' : action;
+            // Verbs sourced from the user's uploaded reference sheet
+            verbs: {
+                er: [
+                    { fr: 'arriver', en: 'to arrive' }, { fr: 'acheter', en: 'to buy' }, { fr: 'changer', en: 'to change' },
+                    { fr: 'rentrer', en: 'to come home' }, { fr: 'consulter', en: 'to consult' }, { fr: 'manger', en: 'to eat' },
+                    { fr: 'trouver', en: 'to find' }, { fr: 'donner', en: 'to give' }, { fr: 'aider', en: 'to help' },
+                    { fr: 'garder', en: 'to keep' }, { fr: 'aimer', en: 'to love/like' }, { fr: 'écouter', en: 'to listen to' },
+                    { fr: 'chercher', en: 'to look for/get' }, { fr: 'jouer', en: 'to play' }, { fr: 'chanter', en: 'to sing' },
+                    { fr: 'fumer', en: 'to smoke' }, { fr: 'commencer', en: 'to start' }, { fr: 'étudier', en: 'to study' },
+                    { fr: 'nager', en: 'to swim' }, { fr: 'voyager', en: 'to travel' }, { fr: 'laver', en: 'to wash' },
+                    { fr: 'gagner', en: 'to win' }, { fr: 'travailler', en: 'to work' }
+                ],
+                ir: [
+                    { fr: 'choisir', en: 'to choose' }, { fr: 'finir', en: 'to finish' }, { fr: 'grossir', en: 'to gain weight' },
+                    { fr: 'grandir', en: 'to grow, grow up' }, { fr: 'maigrir', en: 'to lose weight' }, { fr: 'punir', en: 'to punish' },
+                    { fr: 'réagir', en: 'to react' }, { fr: 'réfléchir', en: 'to think about' }, { fr: 'réussir', en: 'to succeed/pass' } 
+                ],
+                re: [
+                    { fr: 'résoudre', en: 'to resolve' }, { fr: 'descendre', en: 'to descend' }, { fr: 'entendre', en: 'to hear' },
+                    { fr: 'perdre', en: 'to lose' }, { fr: 'vendre', en: 'to sell' }, { fr: 'prendre', en: 'to take' },
+                    { fr: 'attendre', en: 'to wait' } 
+                ]
+            },
 
-            switch (pronounKey) {
-                case 'je': return `I ${conjugatedAction}`;
-                case 'tu': return `You ${conjugatedAction}`;
-                case 'il/elle/on': 
-                    if (infinitive === "briller") return `It ${conjugatedAction}`; // For Le soleil
-                    return `He/She/It ${conjugatedAction}`;
-                case 'nous': return `We ${conjugatedAction}`;
-                case 'vous': return `You all ${conjugatedAction}`;
-                case 'ils/elles': return `They ${conjugatedAction}`;
-                default: return `[${baseTranslation}]`;
-            }
-        }
-        
-        /**
-         * Renders the current state of the error tracker. (Unchanged)
-         */
-        function renderErrorTracker() {
-            const errorList = document.getElementById('error-list');
-            errorList.innerHTML = '';
-            
-            const sortedErrors = Object.entries(errorTracker)
-                .map(([pronoun, count]) => ({ pronoun: pronoun.toUpperCase().replace('/', ' / '), count }))
-                .sort((a, b) => b.count - a.count);
+            init() {
+                this.loadQuiz('er');
+                this.loadQuiz('ir');
+                this.loadQuiz('re');
+                this.renderErrorTracker();
+                this.switchTab('er'); // Start on the ER tab
+            },
 
-            sortedErrors.forEach(item => {
-                const itemDiv = document.createElement('div');
-                const textColor = item.count > 0 ? 'text-red-600 font-bold' : 'text-gray-600';
-                itemDiv.className = `flex justify-between ${textColor} border-b border-yellow-200 pb-1`;
+            switchTab(verbType) {
+                document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+                document.querySelectorAll('.tab-button').forEach(el => el.classList.remove('active'));
                 
-                itemDiv.innerHTML = `<span class="pr-2">${item.pronoun}:</span><span>${item.count}</span>`;
-                errorList.appendChild(itemDiv);
-            });
-        }
-
-        /**
-         * Shuffles an array in place. (Unchanged)
-         */
-        function shuffleArray(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
-            }
-        }
-
-        /**
-         * Creates and displays the 'Next Question' button. (Unchanged)
-         */
-        function showNextQuestionButton() {
-            const existingButton = document.getElementById(nextQuestionButtonId);
-            if (existingButton) existingButton.remove();
-
-            const nextButton = document.createElement('button');
-            nextButton.textContent = 'Launch Next Rocket! ➡️';
-            nextButton.className = 'mt-4 p-3 w-full bg-pink-500 text-white font-bold rounded-xl shadow-lg hover:bg-pink-600 transition';
-            nextButton.id = nextQuestionButtonId;
-
-            nextButton.addEventListener('click', () => {
-                nextButton.remove(); 
-                generateQuestion();
-                isProcessing = false;
-                Array.from(choiceButtonsContainer.children).forEach(btn => btn.disabled = false);
-            });
-
-            rocketArea.parentNode.parentNode.insertBefore(nextButton, messageBox.nextSibling); 
-        }
-
-
-        /**
-         * Selects a random verb, pronoun, and determines the correct ending.
-         */
-        function generateQuestion() {
-            // Reset visuals
-            rocketEmoji.style.transform = 'translateY(0)';
-            rocketEmoji.style.opacity = '1';
-            rocketArea.classList.remove('launching');
-            messageBox.className = "message-box bg-gray-100 text-gray-700";
-            messageBox.textContent = "Choose the ending to launch the rocket!";
-            
-            const nextButton = document.getElementById(nextQuestionButtonId);
-            if (nextButton) nextButton.remove();
-
-            // 1. Pick a random subject and key
-            const randomSubjectObject = subjectMap[Math.floor(Math.random() * subjectMap.length)];
-            const subject = randomSubjectObject.subject;
-            const pronounKey = randomSubjectObject.key; 
-
-            // 2. Pick a random verb (and get its stem)
-            const randomVerb = verbs[Math.floor(Math.random() * verbs.length)];
-            const stem = randomVerb.slice(0, -2);
-
-            // 3. Find the correct ending
-            const correctEnding = conjugationMap[pronounKey];
-
-            // Update game state
-            currentCorrectEnding = correctEnding;
-            currentPronounKey = pronounKey;
-            currentInfinitive = randomVerb; // Store the full infinitive for translation
-
-            // Update display
-            subjectDisplay.textContent = subject.toUpperCase();
-            verbStemDisplay.textContent = stem.toUpperCase();
-
-            // Generate options
-            generateChoiceButtons(correctEnding);
-        }
-
-        /**
-         * Creates choice buttons with the correct and incorrect endings. (Unchanged)
-         */
-        function generateChoiceButtons(correctEnding) {
-            choiceButtonsContainer.innerHTML = '';
-            
-            let incorrectEndings = allEndings.filter(e => e !== correctEnding);
-            shuffleArray(incorrectEndings);
-            
-            const options = [correctEnding, ...incorrectEndings.slice(0, 2)];
-            shuffleArray(options); 
-
-            options.forEach(ending => {
-                const button = document.createElement('button');
-                button.textContent = ending.toUpperCase();
-                button.className = "choice-button p-3 text-xl font-bold rounded-full text-white bg-indigo-500 hover:bg-indigo-600";
-                button.setAttribute('data-ending', ending);
+                document.getElementById(`${verbType}-content`).classList.remove('hidden');
+                document.querySelector(`.tab-button[onclick="app.switchTab('${verbType}')"]`).classList.add('active');
                 
-                button.addEventListener('click', () => {
-                    checkAnswer(ending, button);
+                this.loadNextQuestion(verbType); // Load a new question for the selected tab
+            },
+
+            getVerbInfo(verbType) {
+                const info = {};
+                if (verbType === 'er') {
+                    info.endings = { je: 'e', tu: 'es', illelleon: 'e', nous: 'ons', vous: 'ez', illelles: 'ent' };
+                    info.type = '-ER';
+                } else if (verbType === 'ir') {
+                    info.endings = { je: 's', tu: 's', illelleon: 't', nous: 'issons', vous: 'issez', illelles: 'issent' };
+                    info.type = '-IR';
+                } else {
+                    info.endings = { je: 's', tu: 's', illelleon: '', nous: 'ons', vous: 'ez', illelles: 'ent' };
+                    info.type = '-RE';
+                }
+                return info;
+            },
+
+            generateOptions(correctEnding, verbType) {
+                const info = this.getVerbInfo(verbType);
+                const allEndings = Object.values(info.endings).filter(e => e !== undefined && e !== null);
+                
+                let incorrects = [];
+                let pool = Array.from(new Set(allEndings));
+                
+                while (incorrects.length < 3) {
+                    const candidate = pool[Math.floor(Math.random() * pool.length)];
+                    if (candidate !== correctEnding && !incorrects.includes(candidate)) {
+                        incorrects.push(candidate);
+                    }
+                    if (pool.length <= 1) break; 
+                }
+
+                let options = [correctEnding, ...incorrects].slice(0, 4);
+                if (options.length < 4 && !options.includes(correctEnding)) options.push(correctEnding);
+
+                return options.sort(() => Math.random() - 0.5);
+            },
+
+            loadQuiz(verbType) {
+                const verbsList = this.verbs[verbType];
+                const randomVerb = verbsList[Math.floor(Math.random() * verbsList.length)];
+                const randomPronoun = this.state.pronouns[Math.floor(Math.random() * this.state.pronouns.length)];
+                
+                const stem = randomVerb.fr.slice(0, randomVerb.fr.length - 2);
+                const info = this.getVerbInfo(verbType);
+                const correctEnding = info.endings[randomPronoun.key] || '';
+                const correctAnswer = stem + correctEnding;
+
+                this.state.currentQuestion = {
+                    verb: randomVerb,
+                    pronoun: randomPronoun,
+                    stem: stem,
+                    correctAnswer: correctAnswer,
+                    verbType: verbType,
+                    correctEnding: correctEnding,
+                    options: this.generateOptions(correctEnding, verbType)
+                };
+                
+                this.renderQuizUI(verbType);
+            },
+
+            renderQuizUI(verbType) {
+                const q = this.state.currentQuestion;
+                const container = document.getElementById(`${verbType}-quiz-ui`);
+                const fullVerb = q.verb.fr.toUpperCase();
+                const subjectDisplay = q.pronoun.text.toUpperCase() + (q.pronoun.info ? ` ${q.pronoun.info}` : '');
+                
+                let optionsHTML = q.options.map(ending => {
+                    const display = ending === '' ? '– (Nothing)' : ending.toUpperCase();
+                    const fullWord = q.stem + ending;
+                    return `
+                        <button class="choice-button p-3 text-xl font-bold rounded-full text-white bg-indigo-500 hover:bg-indigo-600" 
+                                data-ending="${ending}" 
+                                onclick="app.checkAnswer('${verbType}', this)">
+                            <span class="text-sm font-normal text-gray-200">${q.stem.toUpperCase()}</span>
+                            <span class="text-3xl">${display}</span>
+                        </button>
+                    `;
+                }).join('');
+
+                container.innerHTML = `
+                    <div class="question-box">
+                        <div id="rocket-area-${verbType}" class="flex flex-col items-center">
+                            <div class="rocket-icon">
+                                <span id="rocket-emoji-${verbType}">🚀</span>
+                            </div>
+                            <p class="pronoun" id="current-subject-${verbType}">${subjectDisplay}</p>
+                            <p class="text-xl text-gray-700 font-bold mb-2">(${fullVerb}: ${q.verb.en})</p>
+                            <p class="verb-stem" id="verb-stem-${verbType}">${q.stem.toUpperCase()}</p>
+                        </div>
+                    </div>
+
+                    <div id="choice-buttons-${verbType}" class="grid grid-cols-3 gap-3">
+                        ${optionsHTML}
+                    </div>
+
+                    <div id="message-${verbType}" class="message-box bg-gray-100 text-gray-700">Choose the ending to launch the rocket!</div>
+                    
+                    <button id="next-question-btn-${verbType}" class="mt-4 p-3 w-full bg-pink-500 text-white font-bold rounded-xl shadow-lg hover:bg-pink-600 transition hidden" 
+                            onclick="app.loadNextQuestion('${verbType}')">
+                        Launch Next Rocket! ➡️
+                    </button>
+                `;
+            },
+
+            checkAnswer(verbType, button) {
+                const q = this.state.currentQuestion;
+                const selectedEnding = button.dataset.ending;
+                const correctEnding = q.correctEnding;
+                const isCorrect = selectedEnding === correctEnding;
+                const messageBox = document.getElementById(`message-${verbType}`);
+                const nextButton = document.getElementById(`next-question-btn-${verbType}`);
+
+                // Disable all buttons
+                document.querySelectorAll(`#choice-buttons-${verbType} button`).forEach(btn => btn.disabled = true);
+
+                let explanationContent = this.buildRuleExplanation(q, selectedEnding, isCorrect);
+                
+                // --- Visual Feedback ---
+                if (isCorrect) {
+                    this.state.score++;
+                    document.getElementById('main-score').textContent = this.state.score;
+                    messageBox.className = "message-box bg-green-100 text-green-700";
+                    document.getElementById(`rocket-area-${verbType}`).classList.add('launching');
+                } else {
+                    this.state.errorTracker[q.pronoun.key]++;
+                    this.renderErrorTracker();
+                    messageBox.className = "message-box bg-red-100 text-red-700";
+                    
+                    // Highlight selected (wrong) and correct button
+                    button.className = "choice-button p-3 text-xl font-bold rounded-full text-white bg-red-500";
+                    const correctButton = document.querySelector(`[data-ending="${correctEnding}"]`);
+                    if (correctButton) {
+                        correctButton.className = "choice-button p-3 text-xl font-bold rounded-full text-white bg-green-500 animate-pulse";
+                    }
+                }
+                
+                messageBox.innerHTML = explanationContent;
+                nextButton.classList.remove('hidden');
+            },
+
+            buildRuleExplanation(q, selectedEnding, isCorrect) {
+                const verbType = q.verbType;
+                const endingText = q.correctEnding.toUpperCase() || '—';
+                const fullFrench = q.pronoun.text.toUpperCase() + ' ' + q.stem.toUpperCase() + endingText;
+                const simpleSubject = q.pronoun.text.toUpperCase();
+                const infinitive = q.verb.fr.toLowerCase();
+                
+                // Logic to get English translation
+                const baseTranslation = this.verbs[verbType].find(v => v.fr === infinitive)?.en || `[${infinitive}]`;
+                const action = baseTranslation.replace('to ', '');
+                const translation = (q.pronoun.key === 'il/elle/on' || q.pronoun.key === 'ils/elles') ? `They/It ${action}` : `${simpleSubject} ${action}`;
+
+                let explanation = '';
+
+                // Part 1: Correctness and Translation
+                if (isCorrect) {
+                    explanation += `<p class="text-xl">✅ C'est correct! (${translation})</p>`;
+                } else {
+                    explanation += `<p class="text-xl">❌ Incorrect! The correct conjugation is **${fullFrench}**.</p>`;
+                }
+                
+                // Part 2: Core Rule
+                explanation += `<h4 class="text-indigo-700 mt-2">Core Rule for ${q.pronoun.text}:</h4>`;
+                explanation += `<p>For **${q.pronoun.text}** (key: ${q.pronoun.key.toUpperCase()}), the **${verbType.toUpperCase()}** verb requires the unique ending: **-${endingText}**.</p>`;
+
+                // Part 3: Other Endings Context
+                explanation += `<h4 class="text-indigo-700 mt-2">Context (Why other endings were wrong):</h4><ul>`;
+                
+                q.options.forEach(ending => {
+                    const isTheCorrectEnding = ending === q.correctEnding;
+                    const style = isTheCorrectEnding ? 'text-green-700 font-bold' : 'text-red-700';
+
+                    const pronounsUsingEnding = Object.keys(this.getVerbInfo(verbType).endings)
+                        .filter(pKey => this.getVerbInfo(verbType).endings[pKey] === ending)
+                        .map(pKey => pKey.toUpperCase().replace('/', '/'))
+                        .join(', ');
+
+                    explanation += `<li class="${style}">Ending **-${ending.toUpperCase() || '—'}**: Used for **${pronounsUsingEnding}**.</li>`;
                 });
-                choiceButtonsContainer.appendChild(button);
-            });
-        }
-        
-        /**
-         * Builds the detailed rule explanation for correct/incorrect answers.
-         */
-        function buildRuleExplanation(subject, pronounKey, correctEnding, currentInfinitive, isCorrect) {
-            const endingText = correctEnding.toUpperCase();
-            const fullFrench = subject.toUpperCase() + ' ' + verbStemDisplay.textContent + endingText;
-            const englishTranslation = getEnglishTranslation(currentInfinitive, pronounKey);
-            let explanation = '';
+                
+                explanation += `</ul>`;
+                return explanation;
+            },
 
-            // --- Part 1: Core Rule ---
-            if (isCorrect) {
-                explanation += `<span class="text-xl">✅ ${fullFrench}</span>`;
-            } else {
-                explanation += `<span class="text-xl">❌ The correct answer is **${fullFrench}**.</span>`;
+            renderErrorTracker() {
+                const errorList = document.getElementById('error-list');
+                errorList.innerHTML = '';
+                
+                const sortedErrors = Object.entries(this.state.errorTracker)
+                    .map(([pronoun, count]) => ({ pronoun: pronoun.toUpperCase().replace('/', ' / '), count }))
+                    .sort((a, b) => b.count - a.count);
+
+                sortedErrors.forEach(item => {
+                    const itemDiv = document.createElement('div');
+                    const textColor = item.count > 0 ? 'text-red-600 font-bold' : 'text-gray-600';
+                    itemDiv.className = `flex justify-between ${textColor} border-b border-indigo-200 pb-1`;
+                    
+                    itemDiv.innerHTML = `<span class="pr-2">${item.pronoun}:</span><span>${item.count}</span>`;
+                    errorList.appendChild(itemDiv);
+                });
+            },
+
+            loadNextQuestion(verbType) {
+                document.getElementById(`message-${verbType}`).classList.remove('bg-green-100', 'text-green-700', 'bg-red-100', 'text-red-700');
+                document.getElementById(`message-${verbType}`).classList.add('bg-gray-100', 'text-gray-700');
+                document.getElementById(`message-${verbType}`).innerHTML = 'Choose the ending to launch the rocket!';
+
+                document.getElementById(`next-question-btn-${verbType}`)?.classList.add('hidden');
+                document.getElementById(`rocket-area-${verbType}`)?.classList.remove('launching');
+                this.state.isProcessing = false;
+
+                // Delay loading slightly to allow animation reset
+                setTimeout(() => this.loadQuiz(verbType), 50);
             }
-            explanation += `<p class="text-base text-gray-500 italic mb-3"> (English: "${englishTranslation}")</p>`;
-            
-            // Core conjugation explanation
-            if (pronounKey === 'il/elle/on') {
-                if (subject === 'L\'ÉQUIPE' || subject === 'LE SOLEIL' || subject === 'LA FILLE' || subject === 'ELLE' || subject === 'ON') {
-                    explanation += `**Rule:** **${subject}** is a **singular** subject (like 'team' or 'sun'). It always acts like **IL / ELLE** and takes the simple ending **-${endingText}**.`;
-                } else {
-                    explanation += `**Rule:** **${subject}** is a singular subject, acting like **IL / ELLE**. It takes the ending **-${endingText}**.`;
-                }
-            } else if (pronounKey === 'ils/elles') {
-                if (subject === 'MAMIE ET PAPY' || subject === 'LES ÉLÈVES' || subject === 'ILS') {
-                    explanation += `**Rule:** **${subject}** is a **plural** subject (two or more people/things). It acts like **ILS / ELLES** and takes the **-${endingText}** ending.`;
-                } else {
-                     explanation += `**Rule:** The ending for **${subject}** is always **-${endingText}**.`;
-                }
-            } else {
-                explanation += `**Rule:** The ending for **${subject}** is always **-${endingText}**.`;
-            }
-            
-            // --- Part 2: Context for Other Endings ---
-            const options = Array.from(choiceButtonsContainer.children);
-            let contextHTML = '<h4>Other Endings Practice:</h4><ul>';
-            
-            // Filter options to get the ones that were visible to the player
-            const visibleEndings = options.map(btn => btn.getAttribute('data-ending'));
-            
-            visibleEndings.forEach(ending => {
-                const pronouns = endingToPronounMap[ending] || 'N/A';
-                
-                // Highlight the correct one in the list
-                const highlight = (ending === correctEnding) ? 'font-bold text-green-700' : '';
-                
-                contextHTML += `<li class="${highlight}">The **-${ending.toUpperCase()}** ending is used for **${pronouns}**.</li>`;
-            });
-            contextHTML += '</ul>';
+        };
 
-            return explanation + contextHTML;
-        }
-
-
-        /**
-         * Checks the user's answer and provides feedback.
-         */
-        function checkAnswer(chosenEnding, button) {
-            if (isProcessing) return;
-            isProcessing = true;
-
-            Array.from(choiceButtonsContainer.children).forEach(btn => btn.disabled = true);
-
-            const subject = subjectDisplay.textContent;
-            let explanationContent;
-            
-            if (chosenEnding === currentCorrectEnding) {
-                // Correct Answer!
-                score++;
-                scoreDisplay.textContent = score;
-
-                explanationContent = buildRuleExplanation(subject, currentPronounKey, currentCorrectEnding, currentInfinitive, true);
-                
-                // Visual feedback for correctness
-                button.className = "choice-button p-3 text-xl font-bold rounded-full text-white bg-green-500";
-                messageBox.className = "message-box bg-green-100 text-green-700";
-                
-                // Rocket Launch Animation
-                rocketArea.classList.add('launching');
-
-            } else {
-                // Incorrect Answer
-                
-                // Increment error tracker
-                errorTracker[currentPronounKey]++;
-                renderErrorTracker();
-                
-                explanationContent = buildRuleExplanation(subject, currentPronounKey, currentCorrectEnding, currentInfinitive, false);
-                
-                // Visual feedback
-                button.className = "choice-button p-3 text-xl font-bold rounded-full text-white bg-red-500";
-                messageBox.className = "message-box bg-red-100 text-red-700";
-                
-                // Find and highlight the correct button
-                const correctButton = Array.from(choiceButtonsContainer.children).find(btn => 
-                    btn.getAttribute('data-ending') === currentCorrectEnding
-                );
-                if (correctButton) {
-                    correctButton.className = "choice-button p-3 text-xl font-bold rounded-full text-white bg-green-500 animate-pulse";
-                }
-            }
-            
-            messageBox.innerHTML = explanationContent;
-
-            // Always show the next question button after checking the answer
-            showNextQuestionButton();
-        }
-
-        // --- INITIALIZATION ---
         window.onload = function() {
-            generateQuestion();
-            renderErrorTracker();
+            app.init();
         };
 
     </script>
