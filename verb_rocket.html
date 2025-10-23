@@ -320,9 +320,9 @@
                 
                 // Determine stem: remove 2 letters unless verb is prendre, which is 4 letters
                 let stemLengthToRemove = 2; 
-                if (verbType === 're' && randomVerb.fr.endsWith('prendre')) {
-                    // prendre, comprendre, apprendre, etc. (often used in -RE patterns)
-                    stemLengthToRemove = 4; // 'prendre' -> 'pren'
+                if (verbType === 're' && (randomVerb.fr.endsWith('prendre') || randomVerb.fr.endsWith('attendre') || randomVerb.fr.endsWith('entendre'))) {
+                    // prendre, attendre, entendre, etc. are 4-letter stems ending in D/T/ND.
+                    stemLengthToRemove = 4;
                 }
                 
                 const stem = randomVerb.fr.slice(0, randomVerb.fr.length - stemLengthToRemove);
