@@ -250,9 +250,9 @@
                     { fr: 'réagir', en: 'to react' }, { fr: 'réfléchir', en: 'to think about' }, { fr: 'réussir', en: 'to succeed/pass' } 
                 ],
                 re: [
-                    { fr: 'résoudre', en: 'to resolve' }, { fr: 'descendre', en: 'to descend' }, { fr: 'entendre', en: 'to hear' },
-                    { fr: 'perdre', en: 'to lose' }, { fr: 'vendre', en: 'to sell' }, { fr: 'prendre', en: 'to take' },
-                    { fr: 'attendre', en: 'to wait' } 
+                    { fr: 'résoudre', en: 'to resolve' }, 
+                    { fr: 'descendre', en: 'to descend' }, 
+                    { fr: 'prendre', en: 'to take' } 
                 ]
             },
 
@@ -294,22 +294,33 @@
 
             generateOptions(correctEnding, verbType) {
                 const info = this.getVerbInfo(verbType);
-                const allEndings = Object.values(info.endings).filter(e => e !== undefined && e !== null);
+                let pool = Object.values(info.endings).filter(e => e !== undefined && e !== null);
                 
+                // CRITICAL FIX: Ensure the empty string ending ('') is never in the pool of options.
+                // If the correct ending IS '', we still need to filter it out from the incorrect options pool.
+                pool = pool.filter(e => e !== '');
+
                 let incorrects = [];
-                let pool = Array.from(new Set(allEndings));
+                let uniquePool = Array.from(new Set(pool));
                 
                 while (incorrects.length < 3) {
-                    const candidate = pool[Math.floor(Math.random() * pool.length)];
+                    const candidate = uniquePool[Math.floor(Math.random() * uniquePool.length)];
                     if (candidate !== correctEnding && !incorrects.includes(candidate)) {
                         incorrects.push(candidate);
                     }
-                    if (pool.length <= 1) break; 
+                    // If pool is tiny, break to prevent infinite loop
+                    if (uniquePool.length <= 1 || incorrects.length === uniquePool.length) break; 
                 }
 
-                let options = [correctEnding, ...incorrects].slice(0, 4);
-                if (options.length < 4 && !options.includes(correctEnding)) options.push(correctEnding);
+                let options = [correctEnding, ...incorrects].filter(e => e !== '').slice(0, 4);
 
+                // Re-add the correct ending if it was filtered out (i.e., if it was the empty string), though we are trying to skip those questions entirely.
+                if (correctEnding === '' && !options.includes('')) {
+                    options.push('');
+                }
+                
+                // Final safety slice and shuffle
+                options = options.slice(0, 4);
                 return options.sort(() => Math.random() - 0.5);
             },
 
@@ -318,10 +329,10 @@
                 const randomVerb = verbsList[Math.floor(Math.random() * verbsList.length)];
                 const randomPronoun = this.state.pronouns[Math.floor(Math.random() * this.state.pronouns.length)];
                 
-                // Determine stem: remove 2 letters unless verb is prendre, which is 4 letters
+                // Determine stem: cut off only -ir/-er/-re (2 letters) except for special verbs.
                 let stemLengthToRemove = 2; 
-                if (verbType === 're' && (randomVerb.fr.endsWith('prendre') || randomVerb.fr.endsWith('attendre') || randomVerb.fr.endsWith('entendre') || randomVerb.fr.endsWith('vendre') || randomVerb.fr.endsWith('perdre') || randomVerb.fr.endsWith('résoudre') || randomVerb.fr.endsWith('descendre'))) {
-                    // For these common -RE verbs, the stem is longer than (Verb - re)
+                if (verbType === 're' && (randomVerb.fr.endsWith('prendre') || randomVerb.fr.endsWith('résoudre'))) {
+                    // Verbs like prendre, résoudre (and compounds like comprendre) lose 4 letters for the stem.
                     stemLengthToRemove = 4;
                 }
                 
@@ -329,6 +340,13 @@
                 
                 const info = this.getVerbInfo(verbType);
                 const correctEnding = info.endings[randomPronoun.key] || '';
+                
+                // If the correct ending is nothing (''), we skip this question type for the -RE tab to avoid the issue entirely.
+                if (correctEnding === '' && verbType === 're') {
+                    // Force reloading the quiz to get a question that requires a visible ending
+                    return this.loadQuiz(verbType); 
+                }
+
                 const correctAnswer = stem + correctEnding;
 
                 this.state.currentQuestion = {
@@ -351,6 +369,7 @@
                 const subjectDisplay = q.pronoun.text.toUpperCase() + (q.pronoun.info ? ` ${q.pronoun.info}` : '');
                 
                 let optionsHTML = q.options.map(ending => {
+                    // Ensure the display is NOT "—" if the ending is NOT the empty string
                     const display = ending === '' ? '– (Nothing)' : ending.toUpperCase();
                     const fullWord = q.stem + ending;
                     return `
