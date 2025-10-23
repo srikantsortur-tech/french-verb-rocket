@@ -5,7 +5,7 @@
     - Tabbed navigation allows for focused practice sessions.
     - Rocket visual theme is preserved for engagement.
     - Detailed, rule-based feedback (e.g., "-IR verbs use -issons") is crucial for test preparation.
-    - NEW: Static conjugation guide table for easy comparison of the three patterns.
+    - NEW: Static conjugation guide table for easy comparison of the three patterns, now including English translations for the pronouns.
 -->
 <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
 <!DOCTYPE html>
@@ -117,7 +117,7 @@
 <body>
 
     <div class="game-container">
-        <h1 class="text-3xl font-bold text-gray-800 mb-4">🚀 The Polyglot Rocket</h1>
+        <h1 class="text-3xl font-extrabold tracking-tight">🚀 The Polyglot Rocket</h1>
         <div class="score-display">Score: <span id="main-score">0</span></div>
 
         <nav class="flex flex-wrap justify-center border-b border-gray-200 mb-4">
@@ -144,37 +144,37 @@
                     </thead>
                     <tbody class="divide-y divide-gray-200 text-center text-sm">
                         <tr>
-                            <td class="py-2 px-1 font-medium">Je</td>
+                            <td class="py-2 px-1 font-medium">Je <span class="text-gray-500 font-normal block">(I)</span></td>
                             <td class="py-2 px-1 text-red-600">parl<strong>e</strong></td>
                             <td class="py-2 px-1 text-green-600">fin<strong>is</strong></td>
                             <td class="py-2 px-1 text-blue-600">vend<strong>s</strong></td>
                         </tr>
                         <tr>
-                            <td class="py-2 px-1 font-medium">Tu</td>
+                            <td class="py-2 px-1 font-medium">Tu <span class="text-gray-500 font-normal block">(You)</span></td>
                             <td class="py-2 px-1 text-red-600">parl<strong>es</strong></td>
                             <td class="py-2 px-1 text-green-600">fin<strong>is</strong></td>
                             <td class="py-2 px-1 text-blue-600">vend<strong>s</strong></td>
                         </tr>
                         <tr>
-                            <td class="py-2 px-1 font-medium">Il/Elle/On</td>
+                            <td class="py-2 px-1 font-medium">Il/Elle/On <span class="text-gray-500 font-normal block">(He/She/It)</span></td>
                             <td class="py-2 px-1 text-red-600">parl<strong>e</strong></td>
                             <td class="py-2 px-1 text-green-600">fin<strong>it</strong></td>
                             <td class="py-2 px-1 text-blue-600">vend<strong>—</strong></td>
                         </tr>
                         <tr>
-                            <td class="py-2 px-1 font-medium">Nous</td>
+                            <td class="py-2 px-1 font-medium">Nous <span class="text-gray-500 font-normal block">(We)</span></td>
                             <td class="py-2 px-1 text-red-600">parl<strong>ons</strong></td>
                             <td class="py-2 px-1 text-green-600">fin<strong>issons</strong></td>
                             <td class="py-2 px-1 text-blue-600">vend<strong>ons</strong></td>
                         </tr>
                         <tr>
-                            <td class="py-2 px-1 font-medium">Vous</td>
+                            <td class="py-2 px-1 font-medium">Vous <span class="text-gray-500 font-normal block">(You all)</span></td>
                             <td class="py-2 px-1 text-red-600">parl<strong>ez</strong></td>
                             <td class="py-2 px-1 text-green-600">fin<strong>issez</strong></td>
                             <td class="py-2 px-1 text-blue-600">vend<strong>ez</strong></td>
                         </tr>
                         <tr>
-                            <td class="py-2 px-1 font-medium">Ils/Elles</td>
+                            <td class="py-2 px-1 font-medium">Ils/Elles <span class="text-gray-500 font-normal block">(They)</span></td>
                             <td class="py-2 px-1 text-red-600">parl<strong>ent</strong></td>
                             <td class="py-2 px-1 text-green-600">fin<strong>issent</strong></td>
                             <td class="py-2 px-1 text-blue-600">vend<strong>ent</strong></td>
@@ -318,9 +318,14 @@
                 const randomVerb = verbsList[Math.floor(Math.random() * verbsList.length)];
                 const randomPronoun = this.state.pronouns[Math.floor(Math.random() * this.state.pronouns.length)];
                 
-                // Special handling for -RE verbs with null/empty ending
-                const stemLength = (verbType === 're' && randomVerb.fr === 'prendre') ? 4 : 2;
-                const stem = randomVerb.fr.slice(0, randomVerb.fr.length - stemLength); // Cut off -er/-ir/-re
+                // Determine stem: remove 2 letters unless verb is prendre, which is 4 letters
+                let stemLengthToRemove = 2; 
+                if (verbType === 're' && randomVerb.fr.endsWith('prendre')) {
+                    // prendre, comprendre, apprendre, etc. (often used in -RE patterns)
+                    stemLengthToRemove = 4; // 'prendre' -> 'pren'
+                }
+                
+                const stem = randomVerb.fr.slice(0, randomVerb.fr.length - stemLengthToRemove);
                 
                 const info = this.getVerbInfo(verbType);
                 const correctEnding = info.endings[randomPronoun.key] || '';
@@ -352,8 +357,8 @@
                         <button class="choice-button p-3 text-xl font-bold rounded-full text-white bg-indigo-500 hover:bg-indigo-600" 
                                 data-ending="${ending}" 
                                 onclick="app.checkAnswer('${verbType}', this)">
-                            <span class="text-sm font-normal text-gray-200">${q.stem.toUpperCase()}</span>
-                            <span class="text-3xl">${display}</span>
+                            <span class="text-xs font-normal text-gray-200">${q.stem.toUpperCase()}</span>
+                            <span class="text-2xl">${display}</span>
                         </button>
                     `;
                 }).join('');
@@ -428,8 +433,16 @@
                 
                 // Logic to get English translation
                 const baseTranslation = this.verbs[verbType].find(v => v.fr === infinitive)?.en || `[${infinitive}]`;
-                const action = baseTranslation.replace('to ', '');
-                const translation = (q.pronoun.key === 'il/elle/on' || q.pronoun.key === 'ils/elles') ? `They/It ${action}` : `${simpleSubject} ${action}`;
+                let translation = baseTranslation.replace('to ', '');
+                
+                // Handle English conjugation for the explanation
+                if (q.pronoun.key === 'je') { translation = 'I ' + translation; }
+                else if (q.pronoun.key === 'tu') { translation = 'You ' + translation; }
+                else if (q.pronoun.key === 'nous') { translation = 'We ' + translation; }
+                else if (q.pronoun.key === 'vous') { translation = 'You all ' + translation; }
+                else if (q.pronoun.key === 'il/elle/on') { translation = 'He/She/It ' + translation + (translation.endsWith('s') ? '' : 's'); }
+                else if (q.pronoun.key === 'ils/elles') { translation = 'They ' + translation; }
+
 
                 let explanation = '';
 
